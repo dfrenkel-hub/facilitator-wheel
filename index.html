@@ -150,6 +150,10 @@
     <span class="drawer-title">Team members</span>
     <button class="drawer-close" onclick="closeDrawer()">×</button>
   </div>
+  <div style="padding: 10px 24px; background: rgba(254,66,180,0.06); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px;">
+    <span style="font-size: 12px; color: var(--muted); flex:1;">Loaded from <code style="background:var(--card);padding:1px 5px;border-radius:3px;font-size:11px;color:#ccc;">members.json</code> — edit the file for permanent changes</span>
+    <span id="fileHint" style="display:none; font-size:11px;"></span>
+  </div>
   <div class="drawer-tabs">
     <div class="tab active" id="tab-btn-list" onclick="switchTab('list')">List</div>
     <div class="tab" id="tab-btn-bulk" onclick="switchTab('bulk')">Bulk paste</div>
@@ -201,9 +205,11 @@
 </div>
 
 <script>
+
 const SEG_COLORS = ['#FE42B4','#2e2e2e','#4A74FF','#383838','#d4389e','#1e1e1e','#3a5fcc','#444444'];
-let members = ['Alex K.','Maria S.','Denis P.','Olga V.','Ivan N.','Yulia T.','Artem B.','Natasha R.'];
+let members = [];
 let spinning = false, currentAngle = 0, history = [], bulkMode = 'replace';
+
 const canvas = document.getElementById('wheel'), ctx = canvas.getContext('2d');
 
 function getNames() { return members.filter(m => m.trim() !== ''); }
@@ -376,7 +382,29 @@ function applyBulk() {
 
 document.getElementById('winnerOverlay').addEventListener('click', function(e) { if (e.target === this) closeWinner(); });
 
-renderMembersList(); drawWheel();
+async function init() {
+  try {
+    const res = await fetch('./members.json');
+    if (!res.ok) throw new Error('not found');
+    members = await res.json();
+  } catch(e) {
+    members = ['Alex K.', 'Maria S.', 'Denis P.', 'Olga V.', 'Ivan N.'];
+    showFileHint('error');
+  }
+  renderMembersList();
+  drawWheel();
+}
+
+function showFileHint(type) {
+  const hint = document.getElementById('fileHint');
+  if (type === 'error') {
+    hint.textContent = 'members.json not found — using defaults';
+    hint.style.color = '#e24b4a';
+  }
+  hint.style.display = 'block';
+}
+
+init();
 </script>
 </body>
 </html>
