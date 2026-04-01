@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Facilitator Wheel — Finom</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --pink: #FE42B4; --dark: #1a1a1a; --card: #242424; --border: #333; --text: #fff; --muted: #888; }
+
+  body { font-family: 'Poppins', sans-serif; background: var(--dark); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+  header { padding: 20px 40px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+  .logo { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+  .logo span { color: var(--pink); }
+  .badge { font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; }
+
+  main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 40px 100px; gap: 32px; }
+
+  .wheel-wrapper { position: relative; width: 460px; height: 460px; flex-shrink: 0; }
+  canvas#wheel { display: block; border-radius: 50%; }
+  .pointer { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 28px solid var(--pink); filter: drop-shadow(0 2px 8px rgba(254,66,180,0.6)); z-index: 10; }
+
+  .spin-btn { background: var(--pink); color: white; border: none; padding: 16px 64px; font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 500; border-radius: 4px; cursor: pointer; letter-spacing: 0.3px; transition: opacity 0.15s, transform 0.1s; }
+  .spin-btn:hover { opacity: 0.9; }
+  .spin-btn:active { transform: scale(0.97); }
+  .spin-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .history-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); flex-wrap: wrap; justify-content: center; }
+  .history-row .hname { color: var(--text); }
+  .history-row .sep { color: var(--border); }
+
+  .error-msg { font-size: 12px; color: #e24b4a; }
+
+  /* WINNER */
+  .winner-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 300; align-items: center; justify-content: center; }
+  .winner-overlay.active { display: flex; }
+  .winner-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 48px 56px; text-align: center; max-width: 380px; width: 90%; }
+  .winner-label { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+  .winner-name { font-size: 36px; font-weight: 600; color: var(--pink); margin-bottom: 8px; line-height: 1.2; }
+  .winner-sub { font-size: 14px; color: var(--muted); margin-bottom: 32px; }
+  .winner-close { background: var(--pink); color: white; border: none; padding: 14px 40px; font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 500; border-radius: 4px; cursor: pointer; transition: opacity 0.15s; }
+  .winner-close:hover { opacity: 0.9; }
+
+  /* RIG BAR */
+  .rig-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 10px 40px; display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--border); background: var(--dark); z-index: 50; }
+  .rig-label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; transition: color 0.15s; }
+  .rig-label:hover { color: var(--text); }
+  .rig-label.on { color: var(--pink); }
+  .rig-note { font-size: 11px; color: var(--border); margin-left: 4px; }
+
+  input#rigCheck { appearance: none; -webkit-appearance: none; width: 32px; height: 18px; border-radius: 9px; border: 1px solid var(--border); background: var(--card); cursor: pointer; position: relative; transition: background 0.2s, border-color 0.2s; flex-shrink: 0; }
+  input#rigCheck::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--muted); transition: transform 0.2s, background 0.2s; }
+  input#rigCheck:checked { background: rgba(254,66,180,0.15); border-color: var(--pink); }
+  input#rigCheck:checked::after { transform: translateX(14px); background: var(--pink); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">fi<span>n</span>om</div>
+  <div class="badge">Facilitator Wheel</div>
+</header>
+
+<main>
+  <div class="wheel-wrapper">
+    <div class="pointer"></div>
+    <canvas id="wheel" width="460" height="460"></canvas>
+  </div>
+
+  <button class="spin-btn" id="spinBtn" onclick="spin()">Spin the wheel</button>
+
+  <div class="history-row" id="historyRow" style="display:none">
+    <span>Last picks:</span>
+    <span id="historyInline"></span>
+  </div>
+
+  <span class="error-msg" id="errorMsg" style="display:none"></span>
+</main>
+
+<!-- WINNER -->
+<div class="winner-overlay" id="winnerOverlay">
+  <div class="winner-card">
+    <div class="winner-label">Next facilitator</div>
+    <div class="winner-name" id="winnerName"></div>
+    <div class="winner-sub">Good luck! 🎉</div>
+    <button class="winner-close" onclick="closeWinner()">Got it</button>
+  </div>
+</div>
+
+<!-- RIG BAR -->
+<div class="rig-bar">
+  <label class="rig-label" id="rigLabel" for="rigCheck">
+    <input type="checkbox" id="rigCheck" onchange="toggleRig(this)">
+    Pre-selected facilitator mode
+  </label>
+  <span class="rig-note" id="rigNote">off</span>
+</div>
+
+<script>
+const SEG_COLORS = ['#FE42B4','#2e2e2e','#4A74FF','#383838','#d4389e','#1e1e1e','#3a5fcc','#444444'];
+const RIG_INDEX = 4;
+
+let members = [];
+let spinning = false, currentAngle = 0, history = [], rigged = false;
+
+const canvas = document.getElementById('wheel'), ctx = canvas.getContext('2d');
+
+function getNames() { return members.filter(m => m.trim() !== ''); }
+
+function drawWheel(hi = -1) {
+  const names = getNames();
+  const cx = canvas.width / 2, cy = canvas.height / 2, r = cx - 4;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (names.length < 2) {
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+    ctx.fillStyle = '#242424'; ctx.fill();
+    ctx.font = "500 14px 'Poppins', sans-serif"; ctx.fillStyle = '#666';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('Loading members.json…', cx, cy);
+    return;
+  }
+
+  const arc = (2 * Math.PI) / names.length;
+  names.forEach((name, i) => {
+    const s = currentAngle + i * arc, e = s + arc;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, s, e); ctx.closePath();
+    ctx.fillStyle = i === hi ? '#FE42B4' : SEG_COLORS[i % SEG_COLORS.length];
+    ctx.fill(); ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(s + arc / 2);
+    const display = name.length > 16 ? name.slice(0, 15) + '…' : name;
+    const fs = names.length > 12 ? 10 : names.length > 8 ? 11 : 13;
+    ctx.font = `500 ${fs}px 'Poppins', sans-serif`;
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText(display, r - 16, 0); ctx.restore();
+  });
+
+  ctx.beginPath(); ctx.arc(cx, cy, 28, 0, 2 * Math.PI);
+  ctx.fillStyle = '#1a1a1a'; ctx.fill();
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.font = "500 11px 'Poppins', sans-serif"; ctx.fillStyle = '#888';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('spin', cx, cy);
+}
+
+function spin() {
+  if (spinning) return;
+  const names = getNames();
+  if (names.length < 2) return;
+  spinning = true;
+  document.getElementById('spinBtn').disabled = true;
+
+  const TAU = 2 * Math.PI;
+  const arc = TAU / names.length;
+  const a0 = currentAngle;
+  let total;
+
+  if (rigged && names.length > RIG_INDEX) {
+    const segCenter = RIG_INDEX * arc + arc / 2;
+    const jitter = (Math.random() - 0.5) * arc * 0.55;
+    const targetNorm = segCenter + jitter;
+    const needed = ((-Math.PI / 2 - a0 - targetNorm) % TAU + TAU) % TAU;
+    total = (7 + Math.floor(Math.random() * 5)) * TAU + needed;
+  } else {
+    total = (5 + Math.floor(Math.random() * 5)) * TAU + Math.random() * TAU;
+  }
+
+  const dur = 4200 + Math.random() * 1200, t0 = performance.now();
+  const ease = t => 1 - Math.pow(1 - t, 4);
+
+  function frame(now) {
+    const p = Math.min((now - t0) / dur, 1);
+    currentAngle = a0 + total * ease(p); drawWheel();
+    if (p < 1) { requestAnimationFrame(frame); return; }
+    currentAngle = a0 + total;
+    const norm = (((-Math.PI / 2 - currentAngle) % TAU + TAU) % TAU);
+    const wi = Math.floor(norm / arc) % names.length;
+    drawWheel(wi); spinning = false;
+    document.getElementById('spinBtn').disabled = false;
+    setTimeout(() => showWinner(names[wi]), 300);
+  }
+  requestAnimationFrame(frame);
+}
+
+function toggleRig(cb) {
+  rigged = cb.checked;
+  const label = document.getElementById('rigLabel');
+  const note = document.getElementById('rigNote');
+  label.classList.toggle('on', rigged);
+  note.textContent = rigged ? `always picks #${RIG_INDEX + 1} in the list` : 'off';
+}
+
+function showWinner(name) {
+  document.getElementById('winnerName').textContent = name;
+  document.getElementById('winnerOverlay').classList.add('active');
+  history.unshift(name); if (history.length > 5) history = history.slice(0, 5);
+  renderHistory();
+}
+function closeWinner() { document.getElementById('winnerOverlay').classList.remove('active'); }
+
+function renderHistory() {
+  const row = document.getElementById('historyRow'), el = document.getElementById('historyInline');
+  if (!history.length) { row.style.display = 'none'; return; }
+  row.style.display = 'flex';
+  el.innerHTML = history.map((n, i) =>
+    `<span class="hname">${n}</span>${i < history.length - 1 ? '<span class="sep"> · </span>' : ''}`
+  ).join('');
+}
+
+document.getElementById('winnerOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeWinner();
+});
+
+async function init() {
+  try {
+    const res = await fetch('./members.json');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    members = await res.json();
+  } catch(e) {
+    const msg = document.getElementById('errorMsg');
+    msg.textContent = 'Could not load members.json — make sure the file is in the same folder.';
+    msg.style.display = 'block';
+  }
+  drawWheel();
+}
+
+init();
+</script>
+</body>
+</html>
