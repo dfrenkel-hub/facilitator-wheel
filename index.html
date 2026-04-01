@@ -88,6 +88,7 @@ const RIG_INDEX = 4;
 let members = [];
 let spinning = false, currentAngle = 0, history = [];
 let rigged = false;
+let firstSpin = true;
 
 const canvas = document.getElementById('wheel'), ctx = canvas.getContext('2d');
 
@@ -141,7 +142,7 @@ function spin() {
   const a0 = currentAngle;
   let total;
 
-  if (rigged && names.length > RIG_INDEX) {
+  if (rigged && firstSpin && names.length > RIG_INDEX) {
     const segCenter = RIG_INDEX * arc + arc / 2;
     const jitter = (Math.random() - 0.5) * arc * 0.55;
     const targetNorm = segCenter + jitter;
@@ -162,6 +163,7 @@ function spin() {
     const norm = (((-Math.PI / 2 - currentAngle) % TAU + TAU) % TAU);
     const wi = Math.floor(norm / arc) % names.length;
     drawWheel(wi); spinning = false;
+    firstSpin = false;
     document.getElementById('spinBtn').disabled = false;
     setTimeout(() => showWinner(names[wi]), 300);
   }
