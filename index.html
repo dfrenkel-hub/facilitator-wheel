@@ -43,17 +43,7 @@
   .winner-close { background: var(--pink); color: white; border: none; padding: 14px 40px; font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 500; border-radius: 4px; cursor: pointer; transition: opacity 0.15s; }
   .winner-close:hover { opacity: 0.9; }
 
-  /* RIG BAR */
-  .rig-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 10px 40px; display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--border); background: var(--dark); z-index: 50; }
-  .rig-label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; transition: color 0.15s; }
-  .rig-label:hover { color: var(--text); }
-  .rig-label.on { color: var(--pink); }
-  .rig-note { font-size: 11px; color: var(--border); margin-left: 4px; }
-
-  input#rigCheck { appearance: none; -webkit-appearance: none; width: 32px; height: 18px; border-radius: 9px; border: 1px solid var(--border); background: var(--card); cursor: pointer; position: relative; transition: background 0.2s, border-color 0.2s; flex-shrink: 0; }
-  input#rigCheck::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--muted); transition: transform 0.2s, background 0.2s; }
-  input#rigCheck:checked { background: rgba(254,66,180,0.15); border-color: var(--pink); }
-  input#rigCheck:checked::after { transform: translateX(14px); background: var(--pink); }
+  .rig-status { position: fixed; bottom: 14px; left: 20px; font-size: 11px; color: #3a3a3a; user-select: none; }
 </style>
 </head>
 <body>
@@ -89,21 +79,15 @@
   </div>
 </div>
 
-<!-- RIG BAR -->
-<div class="rig-bar">
-  <label class="rig-label" id="rigLabel" for="rigCheck">
-    <input type="checkbox" id="rigCheck" onchange="toggleRig(this)">
-    Pre-selected facilitator mode
-  </label>
-  <span class="rig-note" id="rigNote">off</span>
-</div>
+<div class="rig-status" id="rigStatus"></div>
 
 <script>
 const SEG_COLORS = ['#FE42B4','#2e2e2e','#4A74FF','#383838','#d4389e','#1e1e1e','#3a5fcc','#444444'];
 const RIG_INDEX = 4;
 
 let members = [];
-let spinning = false, currentAngle = 0, history = [], rigged = false;
+let spinning = false, currentAngle = 0, history = [];
+let rigged = false;
 
 const canvas = document.getElementById('wheel'), ctx = canvas.getContext('2d');
 
@@ -184,13 +168,7 @@ function spin() {
   requestAnimationFrame(frame);
 }
 
-function toggleRig(cb) {
-  rigged = cb.checked;
-  const label = document.getElementById('rigLabel');
-  const note = document.getElementById('rigNote');
-  label.classList.toggle('on', rigged);
-  note.textContent = rigged ? `always picks #${RIG_INDEX + 1} in the list` : 'off';
-}
+
 
 function showWinner(name) {
   document.getElementById('winnerName').textContent = name;
@@ -217,12 +195,16 @@ async function init() {
   try {
     const res = await fetch('./members.json');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    members = await res.json();
+    const data = await res.json();
+    members = Array.isArray(data) ? data : (data.members || []);
+    rigged = Array.isArray(data) ? false : (data.rigged === true);
   } catch(e) {
     const msg = document.getElementById('errorMsg');
     msg.textContent = 'Could not load members.json — make sure the file is in the same folder.';
     msg.style.display = 'block';
   }
+  document.getElementById('rigStatus').textContent =
+    rigged ? 'pre-selected facilitator mode: on' : 'pre-selected facilitator mode: off';
   drawWheel();
 }
 
