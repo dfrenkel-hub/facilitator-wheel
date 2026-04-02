@@ -2,16 +2,15 @@
 	"rigged": false,
 	"members": [
 		"Aleksander Małaszewicz",
-		"Aleksandr Borodin",
 		"Aleksandr Krupin",
 		"Aleksei Bazhenov",
-		"Esinako Makaluza",
 		"Alexandra Kharlamova",
 		"Alisa  Pugacheva",
 		"Andrey Goncharuk",
 		"Dmitry Frenkel",
 		"Dmitry Zabavin",
 		"Elizaveta Vakhraneva",
+		"Esinako Makaluza",
 		"Fedor Smirnov",
 		"Ilya Aniskovets",
 		"Izmini Nicolaou",
@@ -34,5 +33,9 @@
 		"Andrei Andreevskikh",
 		"Enver Seferov",
 		"Nikolai Biriukov"
-	]
+	],
+"opted_out": [
+	"Aleksandr Borodin",
+	"Natalya Davygora"
+]
 }
