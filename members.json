@@ -25,15 +25,16 @@
 		"Vazgen Ambartsumov",
 		"Vladimir Beloborodov",
 		"Vladimir Lobanov",
-		"Viacheslav Bashkan",
 		"Aleksei Goriunov",
 		"Andrei Andreevskikh",
-		"Enver Seferov",
-		"Nikolai Biriukov"
+		"Enver Seferov"
+		
 	],
 "opted_out": [
 	"Aleksandr Borodin",
 	"Anastasia Perevoshchikova",
-	"Natalya Davygora"
+	"Natalya Davygora",
+	"Nikolai Biriukov",
+	"Viacheslav Bashkan"
 ]
 }
